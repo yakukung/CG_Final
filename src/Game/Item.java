@@ -1,3 +1,4 @@
+// Item
 package Game;
 
 import com.jogamp.opengl.GL2;
@@ -50,23 +51,42 @@ public class Item {
             collected = true; // ไม่แสดงไอเทมอีกถ้าเก็บครบแล้ว
             return;
         }
-        
+
         int[][] mazeData = maze.getMazeData();
         int mazeWidth = maze.getWidth();
         int mazeHeight = maze.getHeight();
-        
+
+        // ตรวจสอบว่ามีช่องว่าง (0) ใน maze หรือไม่
+        boolean hasValidSpot = false;
+        for (int i = 0; i < mazeWidth; i++) {
+            for (int j = 0; j < mazeHeight; j++) {
+                if (mazeData[i][j] == 0) {
+                    hasValidSpot = true;
+                    break;
+                }
+            }
+            if (hasValidSpot) break;
+        }
+
+        // ถ้าไม่มีที่ว่างสำหรับไอเทม ก็ไม่ต้อง spawn
+        if (!hasValidSpot) {
+            collected = true;
+            return;
+        }
+
         int newItemX, newItemY;
         do {
             newItemX = random.nextInt(mazeWidth);
             newItemY = random.nextInt(mazeHeight);
         } while (mazeData[newItemX][newItemY] != 0); // ต้องอยู่บนช่องที่เดินได้ (0)
-        
+
         // แปลงตำแหน่งในเขาวงกตเป็นพิกัดจริงบนหน้าจอ
         x = mazeOffsetX + newItemX * cellWidth + (cellWidth - size) / 2;
         y = mazeOffsetY + newItemY * cellHeight + (cellHeight - size) / 2;
-        
+
         collected = false;
     }
+
     
     public void draw(GL2 gl) {
         if (!collected) {
@@ -80,7 +100,22 @@ public class Item {
         }
     }
     
-    public boolean isAllCollected() {
-        return collectedCount >= maxDrops;
+    public void updatePositions(float mazeOffsetX, float mazeOffsetY, float cellWidth, float cellHeight) {
+        // Recalculate item position based on new maze offset
+        if (!collected) {
+            // Convert current position back to maze coordinates
+            int mazeX = Math.round((x - mazeOffsetX) / cellWidth);
+            int mazeY = Math.round((y - mazeOffsetY) / cellHeight);
+            
+            // Update to new screen coordinates
+            x = mazeOffsetX + mazeX * cellWidth + (cellWidth - size) / 2;
+            y = mazeOffsetY + mazeY * cellHeight + (cellHeight - size) / 2;
+        }
     }
+    
+    public boolean isCollected() {
+        return collected;
+    }
+    
+    
 }
